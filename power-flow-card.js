@@ -76,12 +76,14 @@ class PowerFlowCard extends LitElement {
     ];
 
     this.isInitialized = false;
+
+    // Shifted Y Coordinates to make room for secValueY on top while staying in the viewBox
     this.descriptorAnchors = {
-      solar: { lineX: 523, lineY1: 12, lineY2: 137, textX: 537, valueY: 30, labelY: 54 },
-      grid: { lineX: 171, lineY1: 12, lineY2: 500, textX: 185, valueY: 30, labelY: 54 },
-      battery: { lineX: 672, lineY1: 12, lineY2: 400, textX: 686, valueY: 30, labelY: 54 },
-      ev: { lineX: 365, lineY1: 12, lineY2: 315, textX: 379, valueY: 30, labelY: 54 },
-      home: { lineX: 888, lineY1: 12, lineY2: 255, textX: 902, valueY: 30, labelY: 54 },
+      solar: { lineX: 523, lineY1: 12, lineY2: 137, textX: 537, secValueY: 24, valueY: 52, labelY: 76 },
+      grid: { lineX: 171, lineY1: 12, lineY2: 500, textX: 185, secValueY: 24, valueY: 52, labelY: 76 },
+      battery: { lineX: 672, lineY1: 12, lineY2: 400, textX: 686, secValueY: 24, valueY: 52, labelY: 76 },
+      ev: { lineX: 365, lineY1: 12, lineY2: 315, textX: 379, secValueY: 24, valueY: 52, labelY: 76 },
+      home: { lineX: 888, lineY1: 12, lineY2: 255, textX: 902, secValueY: 24, valueY: 52, labelY: 76 },
     };
   }
 
@@ -166,14 +168,11 @@ class PowerFlowCard extends LitElement {
       }
     } catch (err) {
       console.error(`Failed to load SVG for "${lineType}" from path "${path}":`, err);
-
       containerEl.innerHTML = `
                 <p style="color:#f99; text-align:center; font-weight:bold;">
                     Error loading ${lineType} SVG
                 </p>
             `;
-
-      throw new Error(`SVG load failed for "${lineType}": ${err.message}`);
     }
   }
 
@@ -225,7 +224,6 @@ class PowerFlowCard extends LitElement {
             value = 0;
           }
         } else {
-
           const entityId = this.config.entities[cfg.entity_key];
           const stateObj = entityId ? this._hass.states[entityId] : null;
           value = stateObj ? parseFloat(stateObj.state) : 0;
@@ -236,9 +234,7 @@ class PowerFlowCard extends LitElement {
 
         let animationDuration = 3; // default speed
         
-        // Speed Control by Setting min speed and max Power thresholds as well as min and max flow speed
         if (this.config.dynamic_speed_enabled !== false) {
-          // Higher power = faster animation (shorter duration)
           const minSpeed = this.config.min_flow_speed || 5; 
           const maxSpeed = this.config.max_flow_speed || 1; 
           const minPower = this.config.min_power_threshold || 100; 
@@ -271,6 +267,29 @@ class PowerFlowCard extends LitElement {
   }
 
   static getConfigForm() {
+    // Dynamic Schema Builder for Primary and Secondary Settings per Node
+    const buildDescriptorSchema = (title, prefix) => ({
+      type: "expandable",
+      name: "",
+      title: title,
+      schema: [
+        { name: `${prefix}_descriptor_enabled`, selector: { boolean: {} } },
+        { name: `${prefix}_descriptor_label`, selector: { text: {} } },
+        
+        // Primary
+        { name: `${prefix}_descriptor_entity`, selector: { entity: {} } },
+        { name: `${prefix}_decimals`, type: "integer" },
+        { name: `${prefix}_display_unit`, selector: { text: {} } },
+        { name: `${prefix}_unit_multiplier`, type: "float" },
+        
+        // Secondary
+        { name: `${prefix}_secondary_entity`, selector: { entity: {} } },
+        { name: `${prefix}_secondary_decimals`, type: "integer" },
+        { name: `${prefix}_secondary_display_unit`, selector: { text: {} } },
+        { name: `${prefix}_secondary_unit_multiplier`, type: "float" },
+      ],
+    });
+
     return {
       schema: [
         { name: "name", selector: { text: {} } },
@@ -290,7 +309,7 @@ class PowerFlowCard extends LitElement {
         {
           type: "expandable",
           name: "",
-          title: "Value Formatting",
+          title: "Global Value Formatting (Fallback)",
           schema: [
             { name: "display_unit", selector: { text: {} } },
             { name: "decimals", type: "integer" },
@@ -323,104 +342,55 @@ class PowerFlowCard extends LitElement {
             { name: "battery_discharge_power", selector: { entity: {} } },
           ],
         },
-        {
-          type: "expandable",
-          name: "",
-          title: "Solar Descriptor",
-          schema: [
-            { name: "solar_descriptor_enabled", selector: { boolean: {} } },
-            { name: "solar_descriptor_label", selector: { text: {} } },
-            { name: "solar_descriptor_entity", selector: { entity: {} } },
-          ],
-        },
-        {
-          type: "expandable",
-          name: "",
-          title: "Grid Descriptor",
-          schema: [
-            { name: "grid_descriptor_enabled", selector: { boolean: {} } },
-            { name: "grid_descriptor_label", selector: { text: {} } },
-            { name: "grid_descriptor_entity", selector: { entity: {} } },
-          ],
-        },
-        {
-          type: "expandable",
-          name: "",
-          title: "Battery Descriptor",
-          schema: [
-            { name: "battery_descriptor_enabled", selector: { boolean: {} } },
-            { name: "battery_descriptor_label", selector: { text: {} } },
-            { name: "battery_descriptor_entity", selector: { entity: {} } },
-          ],
-        },
-        {
-          type: "expandable",
-          name: "",
-          title: "EV Descriptor",
-          schema: [
-            { name: "ev_descriptor_enabled", selector: { boolean: {} } },
-            { name: "ev_descriptor_label", selector: { text: {} } },
-            { name: "ev_descriptor_entity", selector: { entity: {} } },
-          ],
-        },
-        {
-          type: "expandable",
-          name: "",
-          title: "Home Descriptor",
-          schema: [
-            { name: "home_descriptor_enabled", selector: { boolean: {} } },
-            { name: "home_descriptor_label", selector: { text: {} } },
-            { name: "home_descriptor_entity", selector: { entity: {} } },
-          ],
-        },
+        buildDescriptorSchema("Solar Descriptor", "solar"),
+        buildDescriptorSchema("Grid Descriptor", "grid"),
+        buildDescriptorSchema("Battery Descriptor", "battery"),
+        buildDescriptorSchema("EV Descriptor", "ev"),
+        buildDescriptorSchema("Home Descriptor", "home"),
       ],
+      
       computeLabel: (schema) => {
-        const map = {
+        const staticMap = {
           name: "Card title",
           threshold: "Active threshold (W)",
-          "entities.solar_power": "Solar power entity",
-          "entities.grid_import_power": "Grid import entity",
-          "entities.grid_export_power": "Grid export entity",
-          "entities.ev_charge_power": "EV charge entity",
-          "entities.battery_charge_power": "Battery charge entity",
-          "entities.battery_discharge_power": "Battery discharge entity",
-          solar_power: "Solar power entity",
-          grid_import_power: "Grid import entity",
-          grid_export_power: "Grid export entity",
-          ev_charge_power: "EV charge entity",
-          battery_charge_power: "Battery charge entity",
-          battery_discharge_power: "Battery discharge entity",
+          "entities.solar_power": "Solar flow entity",
+          "entities.grid_import_power": "Grid import flow entity",
+          "entities.grid_export_power": "Grid export flow entity",
+          "entities.ev_charge_power": "EV charge flow entity",
+          "entities.battery_charge_power": "Battery charge flow entity",
+          "entities.battery_discharge_power": "Battery discharge flow entity",
           dynamic_speed_enabled: "Enable dynamic speed based on power",
           min_flow_speed: "Slowest animation speed (seconds)",
           max_flow_speed: "Fastest animation speed (seconds)",
           min_power_threshold: "Power at slowest speed (Watts)",
           max_power_threshold: "Power at fastest speed (Watts)",
-          display_unit: "Display unit (e.g., kW or kWh)",
-          decimals: "Decimal places to round to",
-          unit_multiplier: "Custom unit multiplier (e.g., 0.001)",
-          solar_line_color: "Solar line color (hex/CSS color)",
-          grid_import_line_color: "Grid import line color (hex/CSS color)",
-          grid_export_line_color: "Grid export line color (hex/CSS color)",
-          battery_charge_line_color: "Battery charge line color (hex/CSS color)",
-          battery_discharge_line_color: "Battery discharge line color (hex/CSS color)",
-          ev_line_color: "EV line color (hex/CSS color)",
-          solar_descriptor_enabled: "Enable solar descriptor",
-          solar_descriptor_label: "Label",
-          solar_descriptor_entity: "Entity (e.g., daily kWh)",
-          grid_descriptor_enabled: "Enable grid descriptor",
-          grid_descriptor_label: "Label",
-          grid_descriptor_entity: "Entity (e.g., daily kWh)",
-          battery_descriptor_enabled: "Enable battery descriptor",
-          battery_descriptor_label: "Label",
-          battery_descriptor_entity: "Entity (e.g., daily kWh)",
-          ev_descriptor_enabled: "Enable EV descriptor",
-          ev_descriptor_label: "Label",
-          ev_descriptor_entity: "Entity (e.g., daily kWh)",
-          home_descriptor_enabled: "Enable home descriptor",
-          home_descriptor_label: "Label",
-          home_descriptor_entity: "Entity (e.g., daily kWh)",
+          display_unit: "Global display unit (Fallback)",
+          decimals: "Global decimal places (Fallback)",
+          unit_multiplier: "Global unit multiplier (Fallback)",
+          solar_line_color: "Solar line color",
+          grid_import_line_color: "Grid import line color",
+          grid_export_line_color: "Grid export line color",
+          battery_charge_line_color: "Battery charge line color",
+          battery_discharge_line_color: "Battery discharge line color",
+          ev_line_color: "EV line color",
         };
-        return map[schema.name];
+
+        if (staticMap[schema.name]) return staticMap[schema.name];
+
+        if (schema.name.endsWith("_descriptor_enabled")) return "Enable descriptor";
+        if (schema.name.endsWith("_descriptor_label")) return "Label";
+        
+        if (schema.name.endsWith("_descriptor_entity")) return "Primary Entity (Power)";
+        if (schema.name.endsWith("_decimals") && !schema.name.includes("_secondary_")) return "Primary Decimals";
+        if (schema.name.endsWith("_display_unit") && !schema.name.includes("_secondary_")) return "Primary Display Unit";
+        if (schema.name.endsWith("_unit_multiplier") && !schema.name.includes("_secondary_")) return "Primary Unit Multiplier";
+
+        if (schema.name.endsWith("_secondary_entity")) return "Secondary Entity (e.g., Energy % or £)";
+        if (schema.name.endsWith("_secondary_decimals")) return "Secondary Decimals";
+        if (schema.name.endsWith("_secondary_display_unit")) return "Secondary Display Unit";
+        if (schema.name.endsWith("_secondary_unit_multiplier")) return "Secondary Unit Multiplier";
+
+        return schema.name;
       },
       assertConfig: (config) => {
         if (config && config.entities && typeof config.entities !== "object") {
@@ -454,7 +424,6 @@ class PowerFlowCard extends LitElement {
 
   static get styles() {
     return css`
-      /* Card Container Setup */
       :host {
         display: block;
       }
@@ -474,12 +443,9 @@ class PowerFlowCard extends LitElement {
         justify-content: center;
         align-items: center;
       }
-
-      /* Background Styling */
       #svg-container-bg svg {
         opacity: 0.5;
       }
-
       #descriptor-overlay {
         position: absolute;
         inset: 0;
@@ -492,6 +458,12 @@ class PowerFlowCard extends LitElement {
         stroke: var(--primary-text-color, #ffffff);
         stroke-width: 2;
         opacity: 0.5;
+      }
+      
+      .descriptor-secondary-value {
+        fill: var(--primary-text-color, #ffffff);
+        font-size: 24px;
+        font-weight: 500;
       }
 
       .descriptor-value {
@@ -506,7 +478,6 @@ class PowerFlowCard extends LitElement {
         font-weight: 500;
       }
 
-      /* Animated Line Styles */
       .anim-line {
         stroke-width: 6px;
         stroke-linecap: round;
@@ -525,11 +496,11 @@ class PowerFlowCard extends LitElement {
         animation-direction: reverse !important;
       }
 
-      /* Animation State Controls */
       .flow-active {
         animation-play-state: running !important;
         opacity: 1 !important;
       }
+      
       .flow-off {
         animation-play-state: paused !important;
         opacity: 0 !important;
@@ -556,7 +527,6 @@ class PowerFlowCard extends LitElement {
         }
       }
 
-      /* Color definitions (these apply classes to the SVG paths) */
       .solar {
         stroke: var(--pfc-solar-color, var(--energy-solar-color, gold)) !important;
       }
@@ -583,18 +553,20 @@ class PowerFlowCard extends LitElement {
     `;
   }
 
-  // Formatting Helper for units, multiples, and decimals
-  formatValue(stateStr, currentUnit) {
+  // Updated Formatting Helper fetching exact configurations for the respective parameter
+  formatValue(stateStr, currentUnit, displayUnitCfg, multiplierCfg, decimalsCfg) {
     let val = parseFloat(stateStr);
-    
-    // If it's not a number, return the original state string and unit
     if (isNaN(val)) return `${stateStr} ${currentUnit}`.trim();
 
-    let displayUnit = (this.config.display_unit !== undefined && this.config.display_unit !== "") ? this.config.display_unit : currentUnit;
-    let multiplier = (this.config.unit_multiplier !== undefined) ? parseFloat(this.config.unit_multiplier) : 1;
+    // Fallbacks to Global Settings (So your original config does not break)
+    let displayUnit = (displayUnitCfg !== undefined && displayUnitCfg !== "") ? displayUnitCfg : 
+                      (this.config.display_unit !== undefined && this.config.display_unit !== "") ? this.config.display_unit : currentUnit;
 
-    // Handle Auto W -> kW and Wh -> kWh conversions if specific display unit is set without an explicit multiplier
-    if (this.config.display_unit && this.config.unit_multiplier === undefined) {
+    let multiplier = (multiplierCfg !== undefined && multiplierCfg !== "") ? parseFloat(multiplierCfg) : 
+                     (this.config.unit_multiplier !== undefined) ? parseFloat(this.config.unit_multiplier) : 1;
+
+    // Handle Auto W -> kW and Wh -> kWh conversions (if user changed unit but did not define a custom multiplier)
+    if (displayUnit && multiplier === 1 && multiplierCfg === undefined) {
       if (currentUnit.toLowerCase() === 'w' && displayUnit.toLowerCase() === 'kw') {
         multiplier = 0.001;
       } else if (currentUnit.toLowerCase() === 'wh' && displayUnit.toLowerCase() === 'kwh') {
@@ -604,46 +576,65 @@ class PowerFlowCard extends LitElement {
 
     val = val * multiplier;
 
-    let decimals = (this.config.decimals !== undefined && this.config.decimals !== "") ? parseInt(this.config.decimals, 10) : undefined;
+    let decimals = (decimalsCfg !== undefined && decimalsCfg !== "") ? parseInt(decimalsCfg, 10) : 
+                   (this.config.decimals !== undefined && this.config.decimals !== "") ? parseInt(this.config.decimals, 10) : undefined;
     
     if (decimals !== undefined && !isNaN(decimals)) {
-      // Round appropriately based on config setting
       const factor = Math.pow(10, decimals);
       val = Math.round(val * factor) / factor;
       return `${val.toFixed(decimals)} ${displayUnit}`.trim();
     }
 
-    // Default fallback to 2 decimal places to prevent floating point trail errors
     return `${Math.round(val * 100) / 100} ${displayUnit}`.trim();
   }
 
-  // Helper method to render a descriptor with label and value
+  // Render text based off coordinates dynamically handling secondary row
   renderDescriptor(type) {
     const enabled = this.config[`${type}_descriptor_enabled`];
     const anchor = this.descriptorAnchors[type];
     if (!enabled || !anchor) return "";
 
     const label = this.config[`${type}_descriptor_label`] || "";
-    const entityId = this.config[`${type}_descriptor_entity`];
+    
+    const primaryEntityId = this.config[`${type}_descriptor_entity`];
+    const secondaryEntityId = this.config[`${type}_secondary_entity`];
 
-    let value = "";
-    if (entityId && this._hass && this._hass.states[entityId]) {
-      const state = this._hass.states[entityId];
+    let primaryValue = "";
+    if (primaryEntityId && this._hass && this._hass.states[primaryEntityId]) {
+      const state = this._hass.states[primaryEntityId];
       const unit = state.attributes.unit_of_measurement || "";
-      // Implement formatting logic here
-      value = this.formatValue(state.state, unit);
+      primaryValue = this.formatValue(
+        state.state, 
+        unit, 
+        this.config[`${type}_display_unit`], 
+        this.config[`${type}_unit_multiplier`], 
+        this.config[`${type}_decimals`]
+      );
+    }
+
+    let secondaryValue = "";
+    if (secondaryEntityId && this._hass && this._hass.states[secondaryEntityId]) {
+      const state = this._hass.states[secondaryEntityId];
+      const unit = state.attributes.unit_of_measurement || "";
+      secondaryValue = this.formatValue(
+        state.state, 
+        unit, 
+        this.config[`${type}_secondary_display_unit`], 
+        this.config[`${type}_secondary_unit_multiplier`], 
+        this.config[`${type}_secondary_decimals`]
+      );
     }
 
     return svg`
       <g class="descriptor descriptor-${type}">
         <line class="descriptor-line" x1="${anchor.lineX}" y1="${anchor.lineY1}" x2="${anchor.lineX}" y2="${anchor.lineY2}"></line>
-        ${value ? svg`<text class="descriptor-value" x="${anchor.textX}" y="${anchor.valueY}">${value}</text>` : ""}
+        ${secondaryValue ? svg`<text class="descriptor-secondary-value" x="${anchor.textX}" y="${anchor.secValueY}">${secondaryValue}</text>` : ""}
+        ${primaryValue ? svg`<text class="descriptor-value" x="${anchor.textX}" y="${anchor.valueY}">${primaryValue}</text>` : ""}
         ${label ? svg`<text class="descriptor-label" x="${anchor.textX}" y="${anchor.labelY}">${label}</text>` : ""}
       </g>
     `;
   }
 
-  // 7. HTML Template (The card structure)
   render() {
     const colorStyle = this.getColorStyleVars();
     return html`
