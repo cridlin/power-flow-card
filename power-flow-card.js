@@ -77,13 +77,15 @@ class PowerFlowCard extends LitElement {
 
     this.isInitialized = false;
 
-    // Shifted Y Coordinates to make room for secValueY on top while staying in the viewBox
+    // Shifted Y Coordinates upwards to make room for extended white lines.
+    // Notice that lineY1 was pushed from 12 to -25 to extend the line's length upwards.
+    // Removed static Y values for the text; they are calculated dynamically to close gaps.
     this.descriptorAnchors = {
-      solar: { lineX: 523, lineY1: 12, lineY2: 137, textX: 537, secValueY: 24, valueY: 52, labelY: 76 },
-      grid: { lineX: 171, lineY1: 12, lineY2: 500, textX: 185, secValueY: 24, valueY: 52, labelY: 76 },
-      battery: { lineX: 672, lineY1: 12, lineY2: 400, textX: 686, secValueY: 24, valueY: 52, labelY: 76 },
-      ev: { lineX: 365, lineY1: 12, lineY2: 315, textX: 379, secValueY: 24, valueY: 52, labelY: 76 },
-      home: { lineX: 888, lineY1: 12, lineY2: 255, textX: 902, secValueY: 24, valueY: 52, labelY: 76 },
+      solar: { lineX: 523, lineY1: -25, lineY2: 137, textX: 537 },
+      grid: { lineX: 171, lineY1: -25, lineY2: 500, textX: 185 },
+      battery: { lineX: 672, lineY1: -25, lineY2: 400, textX: 686 },
+      ev: { lineX: 365, lineY1: -25, lineY2: 315, textX: 379 },
+      home: { lineX: 888, lineY1: -25, lineY2: 255, textX: 902 },
     };
   }
 
@@ -267,7 +269,6 @@ class PowerFlowCard extends LitElement {
   }
 
   static getConfigForm() {
-    // Dynamic Schema Builder for Primary and Secondary Settings per Node
     const buildDescriptorSchema = (title, prefix) => ({
       type: "expandable",
       name: "",
@@ -433,7 +434,8 @@ class PowerFlowCard extends LitElement {
         height: 350px;
         container-type: size;
         pointer-events: none;
-        padding: 16px;
+        /* Increased top padding from 16px to 40px to ensure the higher text and line do not get cut off */
+        padding: 40px 16px 16px 16px; 
         box-sizing: border-box;
       }
       #svg-overlay > div:not(.descriptor) {
@@ -462,8 +464,9 @@ class PowerFlowCard extends LitElement {
       
       .descriptor-secondary-value {
         fill: var(--primary-text-color, #ffffff);
-        font-size: 24px;
+        font-size: 22px;
         font-weight: 500;
+        opacity: 0.85;
       }
 
       .descriptor-value {
@@ -474,7 +477,7 @@ class PowerFlowCard extends LitElement {
 
       .descriptor-label {
         fill: var(--secondary-text-color, #9aa0a6);
-        font-size: 24px;
+        font-size: 22px;
         font-weight: 500;
       }
 
@@ -553,20 +556,17 @@ class PowerFlowCard extends LitElement {
     `;
   }
 
-  // Updated Formatting Helper fetching exact configurations for the respective parameter
   formatValue(stateStr, currentUnit, displayUnitCfg, multiplierCfg, decimalsCfg) {
     let val = parseFloat(stateStr);
     if (isNaN(val)) return `${stateStr} ${currentUnit}`.trim();
 
-    // Fallbacks to Global Settings (So your original config does not break)
     let displayUnit = (displayUnitCfg !== undefined && displayUnitCfg !== "") ? displayUnitCfg : 
                       (this.config.display_unit !== undefined && this.config.display_unit !== "") ? this.config.display_unit : currentUnit;
 
     let multiplier = (multiplierCfg !== undefined && multiplierCfg !== "") ? parseFloat(multiplierCfg) : 
                      (this.config.unit_multiplier !== undefined) ? parseFloat(this.config.unit_multiplier) : 1;
 
-    // Handle Auto W -> kW and Wh -> kWh conversions (if user changed unit but did not define a custom multiplier)
-    if (displayUnit && multiplier === 1 && multiplierCfg === undefined) {
+    if (displayUnit && multiplier === 1 && multiplierCfg === undefined && this.config.unit_multiplier === undefined) {
       if (currentUnit.toLowerCase() === 'w' && displayUnit.toLowerCase() === 'kw') {
         multiplier = 0.001;
       } else if (currentUnit.toLowerCase() === 'wh' && displayUnit.toLowerCase() === 'kwh') {
@@ -588,7 +588,6 @@ class PowerFlowCard extends LitElement {
     return `${Math.round(val * 100) / 100} ${displayUnit}`.trim();
   }
 
-  // Render text based off coordinates dynamically handling secondary row
   renderDescriptor(type) {
     const enabled = this.config[`${type}_descriptor_enabled`];
     const anchor = this.descriptorAnchors[type];
@@ -625,12 +624,34 @@ class PowerFlowCard extends LitElement {
       );
     }
 
+    // Creating an array of text elements pushes them sequentially downward.
+    // By pushing primaryValue first, it forces the prominent value to the top.
+    // If secondary is undefined, the label immediately follows without leaving a gap.
+    const rows = [];
+    
+    if (primaryValue) {
+      rows.push({ text: primaryValue, class: "descriptor-value" });
+    }
+    
+    if (secondaryValue) {
+      rows.push({ text: secondaryValue, class: "descriptor-secondary-value" });
+    }
+    
+    if (label) {
+      rows.push({ text: label, class: "descriptor-label" });
+    }
+
+    let currentY = 0; // Set starting Y near zero since the white line was extended up
+    const textNodes = rows.map(row => {
+      const node = svg`<text class="${row.class}" x="${anchor.textX}" y="${currentY}">${row.text}</text>`;
+      currentY += 26; // Drop down 26px for the next available text row
+      return node;
+    });
+
     return svg`
       <g class="descriptor descriptor-${type}">
         <line class="descriptor-line" x1="${anchor.lineX}" y1="${anchor.lineY1}" x2="${anchor.lineX}" y2="${anchor.lineY2}"></line>
-        ${secondaryValue ? svg`<text class="descriptor-secondary-value" x="${anchor.textX}" y="${anchor.secValueY}">${secondaryValue}</text>` : ""}
-        ${primaryValue ? svg`<text class="descriptor-value" x="${anchor.textX}" y="${anchor.valueY}">${primaryValue}</text>` : ""}
-        ${label ? svg`<text class="descriptor-label" x="${anchor.textX}" y="${anchor.labelY}">${label}</text>` : ""}
+        ${textNodes}
       </g>
     `;
   }
@@ -646,7 +667,8 @@ class PowerFlowCard extends LitElement {
           <div id="svg-container-ev"></div>
           <div id="svg-container-primary"></div>
           <div id="svg-container-out"></div>
-          <svg id="descriptor-overlay" viewBox="0 0 1139 756" preserveAspectRatio="xMidYMid meet">
+          <!-- Note: overflow: visible has been added to ensure the extended lines and text do not crop if they exceed bounds -->
+          <svg id="descriptor-overlay" viewBox="0 0 1139 756" preserveAspectRatio="xMidYMid meet" style="overflow: visible;">
             ${this.renderDescriptor("solar")}
             ${this.renderDescriptor("grid")}
             ${this.renderDescriptor("battery")}
