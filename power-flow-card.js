@@ -707,9 +707,9 @@ class PowerFlowCard extends LitElement {
       
       // Dynamic spacing: larger drop after the big primary value, tighter grouping for the rest
       if (row.class === "descriptor-value") {
-          currentY += 22; 
+          currentY += 38; 
       } else {
-          currentY += 18; 
+          currentY += 30; 
       }
       return node;
     });
