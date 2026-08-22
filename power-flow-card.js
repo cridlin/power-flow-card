@@ -468,6 +468,29 @@ class PowerFlowCard extends LitElement {
       #svg-container-bg svg {
         opacity: 0.5;
       }
+      
+      /* Theme Support for Background SVG */
+      .theme-light #svg-container-bg svg {
+        opacity: 0.8; 
+      }
+      .theme-light #svg-container-bg #house path { fill: #dce1e8 !important; }
+      .theme-light #svg-container-bg #roof path { fill: #c8d0db !important; }
+      .theme-light #svg-container-bg #windows path { fill: #9bc2e6 !important; } 
+      .theme-light #svg-container-bg #solar path { fill: #666155 !important; } 
+      .theme-light #svg-container-bg #inverter path { fill: #a5b1c2 !important; }
+      .theme-light #svg-container-bg #car path { fill: #a5b1c2 !important; }
+      .theme-light #svg-container-bg #battery path:nth-child(1) { fill: #a5b1c2 !important; }
+      
+      .theme-light #svg-container-bg #powerline-solar path,
+      .theme-light #svg-container-bg #powerline-outside path,
+      .theme-light #svg-container-bg #powerline-grid path:nth-child(3) { 
+        stroke: #777777 !important; 
+      }
+      .theme-light #svg-container-bg #powerline-battery path,
+      .theme-light #svg-container-bg #powerline-house path { 
+        stroke: #555555 !important; 
+      }
+
       #descriptor-overlay {
         position: absolute;
         inset: 0;
@@ -482,6 +505,12 @@ class PowerFlowCard extends LitElement {
         opacity: 0.5;
       }
       
+      /* Use fallback to dark text in light mode just in case HA vars fail */
+      .theme-light .descriptor-line { stroke: var(--primary-text-color, #000000); }
+      .theme-light .descriptor-value,
+      .theme-light .descriptor-secondary-value { fill: var(--primary-text-color, #000000); }
+      .theme-light .descriptor-label { fill: var(--secondary-text-color, #555555); }
+
       .descriptor-secondary-value {
         fill: var(--primary-text-color, #ffffff);
         font-size: var(--secondary-font-size, 28px);
@@ -550,29 +579,12 @@ class PowerFlowCard extends LitElement {
         }
       }
 
-      .solar {
-        stroke: var(--pfc-solar-color, var(--energy-solar-color, gold)) !important;
-      }
-      
-      .grid-import {
-        stroke: var(--pfc-grid-import-color, var(--energy-grid-consumption-color, dodgerblue)) !important;
-      }
-      
-      .grid-export {
-        stroke: var(--pfc-grid-export-color, var(--energy-grid-return-color, limegreen)) !important;
-      }
-      
-      .bat-charge {
-        stroke: var(--pfc-battery-charge-color, var(--energy-battery-charge-color, cornflowerblue)) !important;
-      }
-      
-      .bat-discharge {
-         stroke: var(--pfc-battery-discharge-color, var(--energy-battery-discharge-color, deepskyblue)) !important;
-      }
-
-      .ev {
-        stroke: var(--pfc-ev-color, var(--energy-car-color, deepskyblue)) !important;
-      }
+      .solar { stroke: var(--pfc-solar-color, var(--energy-solar-color, gold)) !important; }
+      .grid-import { stroke: var(--pfc-grid-import-color, var(--energy-grid-consumption-color, dodgerblue)) !important; }
+      .grid-export { stroke: var(--pfc-grid-export-color, var(--energy-grid-return-color, limegreen)) !important; }
+      .bat-charge { stroke: var(--pfc-battery-charge-color, var(--energy-battery-charge-color, cornflowerblue)) !important; }
+      .bat-discharge { stroke: var(--pfc-battery-discharge-color, var(--energy-battery-discharge-color, deepskyblue)) !important; }
+      .ev { stroke: var(--pfc-ev-color, var(--energy-car-color, deepskyblue)) !important; }
     `;
   }
 
@@ -715,7 +727,7 @@ class PowerFlowCard extends LitElement {
           <!-- Compliant XHTML namespace ensures Home Assistant icons render in SVG -->
           <foreignObject x="${anchor.textX}" y="${iconY}" width="${iconSize}" height="${iconSize}">
             <div xmlns="http://www.w3.org/1999/xhtml" style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;">
-              <ha-icon icon="${row.icon}" style="color: var(--primary-text-color, #ffffff); --mdc-icon-size: ${iconSize}px; width: ${iconSize}px; height: ${iconSize}px; display: block;"></ha-icon>
+              <ha-icon icon="${row.icon}" style="color: inherit; --mdc-icon-size: ${iconSize}px; width: ${iconSize}px; height: ${iconSize}px; display: block;"></ha-icon>
             </div>
           </foreignObject>
           <text class="${row.class}" x="${anchor.textX + row.offset}" y="${currentY}">${row.text}</text>
@@ -738,9 +750,16 @@ class PowerFlowCard extends LitElement {
   }
 
   render() {
+    let themeClass = "theme-dark";
+    if (this._hass && this._hass.themes) {
+      if (this._hass.themes.darkMode === false) {
+        themeClass = "theme-light";
+      }
+    }
+
     const colorStyle = this.getColorStyleVars();
     return html`
-      <ha-card header="${this.config.name || "Power Flow Diagram"}" style="${colorStyle}">
+      <ha-card class="${themeClass}" header="${this.config.name || "Power Flow Diagram"}" style="${colorStyle}">
         <div id="svg-overlay">
           <div id="svg-container-bg"></div>
           <div id="svg-container-solar"></div>
