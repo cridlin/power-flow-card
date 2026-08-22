@@ -6,6 +6,7 @@
 ---
 A custom Lovelace card for visualizing real-time energy flow between grid, solar, battery, and home.  
 Provides a clean, animated interface that makes it easy to understand how power is moving through your system.
+Forked, AI coding to meet my wants correcting power and energy confusion of the original, whilst displaying both.
 
 ---
 
@@ -18,6 +19,7 @@ Provides a clean, animated interface that makes it easy to understand how power 
 - Supports grid import/export, solar generation, battery charge/discharge, and EV charging
 - Optional descriptors with labels and values for each component
 - Fully configurable via Home Assistant UI
+- Secondary card row with icons, to allow display of energy, cost or other information fields.
 
 ---
 
