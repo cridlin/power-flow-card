@@ -463,20 +463,20 @@ class PowerFlowCard extends LitElement {
       
       .descriptor-secondary-value {
         fill: var(--primary-text-color, #ffffff);
-        font-size: 14px; /* Scaled down perfectly in line with icon */
+        font-size: 28px; /* Scaled down perfectly in line with icon */
         font-weight: 500;
         opacity: 0.9;
       }
 
       .descriptor-value {
         fill: var(--primary-text-color, #ffffff);
-        font-size: 20px; /* Strong, bold primary metric */
+        font-size: 34px; /* Strong, bold primary metric */
         font-weight: bold;
       }
 
       .descriptor-label {
         fill: var(--secondary-text-color, #9aa0a6);
-        font-size: 14px;
+        font-size: 28px;
         font-weight: 500;
       }
 
@@ -675,8 +675,8 @@ class PowerFlowCard extends LitElement {
     
     if (secondaryValue) {
       if (resolvedIcon) {
-        // Offset the text so the icon can fit to the left cleanly (14px icon + 4px gap)
-        rows.push({ type: 'icon-text', icon: resolvedIcon, text: secondaryValue, class: "descriptor-secondary-value", offset: 18 });
+        // Offset the text so the icon can fit to the left cleanly (28px icon + 4px gap)
+        rows.push({ type: 'icon-text', icon: resolvedIcon, text: secondaryValue, class: "descriptor-secondary-value", offset: 32 });
       } else {
         rows.push({ type: 'text', text: secondaryValue, class: "descriptor-secondary-value", offset: 0 });
       }
@@ -694,9 +694,9 @@ class PowerFlowCard extends LitElement {
       if (row.type === 'icon-text') {
         node = svg`
           <!-- Fix Browser Rendering Bugs: Use xmlns to ensure the custom ha-icon renders perfectly inside an SVG layout -->
-          <foreignObject x="${anchor.textX}" y="${currentY - 12}" width="14" height="14">
+          <foreignObject x="${anchor.textX}" y="${currentY - 12}" width="28" height="28">
             <div xmlns="http://www.w3.org/1999/xhtml" style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;">
-              <ha-icon icon="${row.icon}" style="color: var(--primary-text-color, #ffffff); --mdc-icon-size: 14px; width: 14px; height: 14px; display: block; margin-top: 1px;"></ha-icon>
+              <ha-icon icon="${row.icon}" style="color: var(--primary-text-color, #ffffff); --mdc-icon-size: 28px; width: 28px; height: 28px; display: block; margin-top: 1px;"></ha-icon>
             </div>
           </foreignObject>
           <text class="${row.class}" x="${anchor.textX + row.offset}" y="${currentY}">${row.text}</text>
