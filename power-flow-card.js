@@ -85,11 +85,11 @@ class PowerFlowCard extends LitElement {
 
   // Ensures all injected SVGs scale identically, eliminating 1px line drift
 alignSVGViewBox(svgEl) {
-    svgEl.setAttribute("preserveAspectRatio", "xMidYMid meet");
+    svgEl.setAttribute("preserveAspectRatio", "xMidYMax meet");
     svgEl.style.width = "100%";
     svgEl.style.height = "100%";
   }
-
+  
   processSVGString(text, containerEl, lineType) {
     containerEl.innerHTML = text;
     const svgEl = containerEl.querySelector("svg");
@@ -473,10 +473,10 @@ alignSVGViewBox(svgEl) {
       #svg-overlay {
         position: relative;
         width: 100%;
-        height: 260px;
+        height: 290px;
         container-type: size;
         pointer-events: none;
-        padding: 32px 16px 16px 16px;
+        padding: 64px 16px 0px 16px;
         box-sizing: border-box;
       }
       #svg-container-bg svg {
@@ -820,7 +820,7 @@ alignSVGViewBox(svgEl) {
           <div id="svg-container-ev"></div>
           <div id="svg-container-primary"></div>
           <div id="svg-container-out"></div>
-          <svg id="descriptor-overlay" viewBox="0 0 1139 756" preserveAspectRatio="xMidYMid meet" style="overflow: visible;">
+          <svg id="descriptor-overlay" viewBox="0 0 1139 756" preserveAspectRatio="xMidYMax meet" style="overflow: visible;">
             ${this.renderDescriptor("solar")}
             ${this.renderDescriptor("grid")}
             ${this.renderDescriptor("battery")}
