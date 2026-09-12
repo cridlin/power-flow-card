@@ -38,11 +38,11 @@ class PowerFlowCard extends LitElement {
     this.isInitialized = false;
 
     this.descriptorAnchors = {
-      solar: { lineX: 523, lineY1: -48, lineY2: 137, textX: 537 },
-      grid: { lineX: 171, lineY1: -48, lineY2: 500, textX: 185 },
-      battery: { lineX: 672, lineY1: -48, lineY2: 400, textX: 686 },
-      ev: { lineX: 365, lineY1: -48, lineY2: 315, textX: 379 },
-      home: { lineX: 888, lineY1: -48, lineY2: 255, textX: 902 },
+      solar: { lineX: 523, lineY1: -70, lineY2: 137, textX: 537 },
+      grid: { lineX: 171, lineY1: -70, lineY2: 500, textX: 185 },
+      battery: { lineX: 672, lineY1: -70, lineY2: 400, textX: 686 },
+      ev: { lineX: 365, lineY1: -70, lineY2: 315, textX: 379 },
+      home: { lineX: 888, lineY1: -70, lineY2: 255, textX: 902 },
     };
   }
 
@@ -83,12 +83,13 @@ class PowerFlowCard extends LitElement {
     }
   }
 
+  // Ensures all injected SVGs scale identically, eliminating line drift
   alignSVGViewBox(svgEl) {
-    svgEl.setAttribute("preserveAspectRatio", "xMidYMid meet");
+    svgEl.setAttribute("preserveAspectRatio", "none");
     svgEl.style.width = "100%";
     svgEl.style.height = "100%";
   }
-  
+
   processSVGString(text, containerEl, lineType) {
     containerEl.innerHTML = text;
     const svgEl = containerEl.querySelector("svg");
@@ -219,7 +220,6 @@ class PowerFlowCard extends LitElement {
           const maxPower = this.config.max_power_threshold || 10000;
           
           const clampedPower = Math.max(minPower, Math.min(maxPower, Math.abs(value)));
-          // Prevent divide by zero if thresholds are identically misconfigured
           const powerDiff = maxPower - minPower;
           const speedRatio = powerDiff === 0 ? 1 : (clampedPower - minPower) / powerDiff;
           animationDuration = minSpeed - (speedRatio * (minSpeed - maxSpeed));
@@ -230,7 +230,6 @@ class PowerFlowCard extends LitElement {
           line.classList.toggle("flow-off", !isActive);
           line.classList.toggle("reverse-flow", reverse);
           
-          // Bug Fix: Swap battery color class based on state so light mode doesn't lose color styling
           if (cfg.type === "bat-charge") {
             if (reverse) {
               line.classList.remove("bat-charge");
@@ -460,22 +459,27 @@ class PowerFlowCard extends LitElement {
       :host {
         display: block;
       }
-      :host {
-        display: block;
-      }
       ha-card {
-        overflow: hidden !important; /* Critical: Clips the car at the bottom */
+        overflow: hidden !important; /* Clips the car overflow at the bottom */
       }
       #svg-overlay {
         position: relative;
-        width: 110%; /* Zooms the entire graphic in by 10% */
-        left: -5%; /* Re-centers the zoomed graphic */
-        height: 310px; /* Gives the SVG room to render large */
+        width: 112%; /* Zooms the entire graphic in nicely */
+        left: -6%; /* Keeps the zoomed graphic perfectly centered */
+        aspect-ratio: 1.5; /* CRITICAL: Locks proportions so the house NEVER squashes */
+        height: auto;
+        margin-top: 32px; /* Pushes the graphic down, leaving a safe gap for text */
+        margin-bottom: -10%; /* Pulls the bottom of the card UP, cleanly slicing the car */
         container-type: size;
         pointer-events: none;
-        padding: 24px 16px 0px 16px; /* Pulls the text up snugly under the title */
-        margin-bottom: -45px; /* Pulls the bottom of the card UP, cleanly slicing off the car */
-        box-sizing: border-box;
+        /* Note: No padding used here, as padding distorts SVG scaling */
+      }
+      #svg-overlay > div:not(.descriptor) {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
       }
       #svg-container-bg svg {
         opacity: 0.5;
@@ -551,7 +555,7 @@ class PowerFlowCard extends LitElement {
       }
 
       .anim-line {
-        stroke-width: 7px; /* Bare minimum increase over the original 6px to safely mask thickened light mode lines */
+        stroke-width: 7px;
         stroke-linecap: round;
         filter: url(#glow);
         stroke-dasharray: 100 2000;
@@ -625,7 +629,6 @@ class PowerFlowCard extends LitElement {
     return rawIcon;
   }
 
-  // Robustly intercepts unavailable sensors and supports any global currency symbol dynamically
   formatValue(stateStr, currentUnit, displayUnitCfg, multiplierCfg, decimalsCfg, entityId) {
     if (!stateStr || stateStr.toLowerCase() === "unavailable" || stateStr.toLowerCase() === "unknown") {
       return "Unavailable";
@@ -767,7 +770,7 @@ class PowerFlowCard extends LitElement {
     
     if (label) rows.push({ type: 'text', text: label, class: "descriptor-label", offset: 0, fontSize: secondaryFontSize });
 
-    let currentY = -15; 
+    let currentY = -35; 
     
     const textNodes = rows.map((row) => {
       let node;
@@ -818,7 +821,7 @@ class PowerFlowCard extends LitElement {
           <div id="svg-container-ev"></div>
           <div id="svg-container-primary"></div>
           <div id="svg-container-out"></div>
-          <svg id="descriptor-overlay" viewBox="0 0 1139 756" preserveAspectRatio="xMidYMax meet" style="overflow: visible;">
+          <svg id="descriptor-overlay" viewBox="0 0 1139 756" preserveAspectRatio="none" style="overflow: visible;">
             ${this.renderDescriptor("solar")}
             ${this.renderDescriptor("grid")}
             ${this.renderDescriptor("battery")}
