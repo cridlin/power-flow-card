@@ -38,11 +38,11 @@ class PowerFlowCard extends LitElement {
     this.isInitialized = false;
 
     this.descriptorAnchors = {
-      solar: { lineX: 523, lineY1: -38, lineY2: 137, textX: 537 },
-      grid: { lineX: 171, lineY1: -38, lineY2: 500, textX: 185 },
-      battery: { lineX: 672, lineY1: -38, lineY2: 400, textX: 686 },
-      ev: { lineX: 365, lineY1: -38, lineY2: 315, textX: 379 },
-      home: { lineX: 888, lineY1: -38, lineY2: 255, textX: 902 },
+      solar: { lineX: 523, lineY1: -88, lineY2: 137, textX: 537 },
+      grid: { lineX: 171, lineY1: -88, lineY2: 500, textX: 185 },
+      battery: { lineX: 672, lineY1: -88, lineY2: 400, textX: 686 },
+      ev: { lineX: 365, lineY1: -88, lineY2: 315, textX: 379 },
+      home: { lineX: 888, lineY1: -88, lineY2: 255, textX: 902 },
     };
   }
 
@@ -470,12 +470,14 @@ alignSVGViewBox(svgEl) {
         padding: 48px 16px 16px 16px; 
         box-sizing: border-box;
       }
-      #svg-overlay > div:not(.descriptor) {
-        position: absolute;
-        inset: 0;
-        display: flex;
-        justify-content: center;
-        align-items: center;
+      #svg-overlay {
+        position: relative;
+        width: 100%;
+        height: 260px;
+        container-type: size;
+        pointer-events: none;
+        padding: 32px 16px 16px 16px;
+        box-sizing: border-box;
       }
       #svg-container-bg svg {
         opacity: 0.5;
@@ -767,7 +769,7 @@ alignSVGViewBox(svgEl) {
     
     if (label) rows.push({ type: 'text', text: label, class: "descriptor-label", offset: 0, fontSize: secondaryFontSize });
 
-    let currentY = -5; 
+    let currentY = -55; 
     
     const textNodes = rows.map((row) => {
       let node;
