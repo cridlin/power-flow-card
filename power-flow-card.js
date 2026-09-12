@@ -38,11 +38,11 @@ class PowerFlowCard extends LitElement {
     this.isInitialized = false;
 
     this.descriptorAnchors = {
-      solar: { lineX: 523, lineY1: -88, lineY2: 137, textX: 537 },
-      grid: { lineX: 171, lineY1: -88, lineY2: 500, textX: 185 },
-      battery: { lineX: 672, lineY1: -88, lineY2: 400, textX: 686 },
-      ev: { lineX: 365, lineY1: -88, lineY2: 315, textX: 379 },
-      home: { lineX: 888, lineY1: -88, lineY2: 255, textX: 902 },
+      solar: { lineX: 523, lineY1: -58, lineY2: 172, textX: 537 },
+      grid: { lineX: 171, lineY1: -58, lineY2: 535, textX: 185 },
+      battery: { lineX: 672, lineY1: -58, lineY2: 435, textX: 686 },
+      ev: { lineX: 365, lineY1: -58, lineY2: 350, textX: 379 },
+      home: { lineX: 888, lineY1: -58, lineY2: 290, textX: 902 },
     };
   }
 
@@ -769,7 +769,7 @@ alignSVGViewBox(svgEl) {
     
     if (label) rows.push({ type: 'text', text: label, class: "descriptor-label", offset: 0, fontSize: secondaryFontSize });
 
-    let currentY = -55; 
+    let currentY = -25; 
     
     const textNodes = rows.map((row) => {
       let node;
