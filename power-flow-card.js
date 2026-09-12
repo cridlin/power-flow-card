@@ -83,7 +83,6 @@ class PowerFlowCard extends LitElement {
     }
   }
 
-  // Ensures all injected SVGs scale identically, eliminating line drift
   alignSVGViewBox(svgEl) {
     svgEl.setAttribute("preserveAspectRatio", "none");
     svgEl.style.width = "100%";
@@ -263,13 +262,11 @@ class PowerFlowCard extends LitElement {
         { name: `${prefix}_descriptor_enabled`, selector: { boolean: {} } },
         { name: `${prefix}_descriptor_label`, selector: { text: {} } },
         
-        // Primary
         { name: `${prefix}_tap_entity`, selector: { entity: {} } },
         { name: `${prefix}_descriptor_entity`, selector: { entity: {} } },
         { name: `${prefix}_display_unit`, selector: { text: {} } },
         { name: `${prefix}_unit_multiplier`, type: "float" },
         
-        // Secondary
         { name: `${prefix}_secondary_entity`, selector: { entity: {} } },
         { name: `${prefix}_secondary_icon`, selector: { icon: {} } },
         { name: `${prefix}_secondary_display_unit`, selector: { text: {} } },
@@ -460,15 +457,15 @@ class PowerFlowCard extends LitElement {
         display: block;
       }
       ha-card {
-        overflow: hidden !important; /* Clips the car overflow at the bottom */
+        overflow: hidden !important; 
       }
       #svg-overlay {
         position: relative;
-        width: 101%;
-        left: -3%;
+        width: 101%; 
+        left: -3%; 
         aspect-ratio: 1.5; 
         height: auto;
-        margin-top: 32px; 
+        margin-top: 48px; /* Increased from 32px for more title breathing room */
         margin-bottom: -7%; 
         container-type: size;
         pointer-events: none;
@@ -484,25 +481,26 @@ class PowerFlowCard extends LitElement {
         opacity: 0.5;
       }
       
-      /* Default Dark Mode Styles */
       #svg-container-bg #house path { fill: var(--pfc-house-color-dark, #4a5976) !important; }
       #svg-container-bg #roof path { fill: var(--pfc-roof-color-dark, #3b465e) !important; }
+      
+      /* Lighter Dark Mode Car Layer Fix */
+      #svg-container-bg #car path:nth-child(1) { fill: #334155 !important; }
+      #svg-container-bg #car path:nth-child(2) { fill: #94a3b8 !important; }
+      #svg-container-bg #car path:nth-child(3) { fill: #475569 !important; }
 
-      /* Theme Support for Background SVG in Light Mode */
       .theme-light #svg-container-bg svg { opacity: 0.8; }
       .theme-light #svg-container-bg #house path { fill: var(--pfc-house-color-light, #dce1e8) !important; }
       .theme-light #svg-container-bg #roof path { fill: var(--pfc-roof-color-light, #c8d0db) !important; }
       .theme-light #svg-container-bg #windows path { fill: #9bc2e6 !important; } 
       .theme-light #svg-container-bg #solar path { fill: #666155 !important; } 
-      .theme-light #svg-container-bg #inverter path { fill: #a5b1c2 !important; }
-      .theme-light #svg-container-bg #battery path:nth-child(1) { fill: #a5b1c2 !important; }
+      .theme-light #svg-container-bg #inverter path { fill: #475569 !important; } /* Darkened Slate */
+      .theme-light #svg-container-bg #battery path:nth-child(1) { fill: #475569 !important; } /* Darkened Slate */
       
-      /* Light Mode Car Layer Fix */
       .theme-light #svg-container-bg #car path:nth-child(1) { fill: #64748b !important; }
       .theme-light #svg-container-bg #car path:nth-child(2) { fill: #e2e8f0 !important; }
       .theme-light #svg-container-bg #car path:nth-child(3) { fill: #94a3b8 !important; }
       
-      /* Restored Thick Background Lines for Light Mode */
       .theme-light #svg-container-bg #powerline-solar path,
       .theme-light #svg-container-bg #powerline-outside path,
       .theme-light #svg-container-bg #powerline-grid path:nth-child(3) { 
@@ -652,7 +650,8 @@ class PowerFlowCard extends LitElement {
                       (this.config.display_unit !== undefined && this.config.display_unit !== "") ? this.config.display_unit : (currentUnit || "");
 
     if (symbol && displayUnit) {
-      displayUnit = displayUnit.replace(symbol, "").trim();
+      // Strip ALL known currency symbols from the trailing text to prevent duplication
+      displayUnit = displayUnit.replace(/[\$£€¥₹₽₩¢₪₫฿₺]/g, "").trim();
     }
 
     let multiplier = (multiplierCfg !== undefined && multiplierCfg !== "") ? parseFloat(multiplierCfg) : 
