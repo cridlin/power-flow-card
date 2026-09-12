@@ -84,8 +84,8 @@ class PowerFlowCard extends LitElement {
   }
 
   // Ensures all injected SVGs scale identically, eliminating 1px line drift
-  alignSVGViewBox(svgEl) {
-    svgEl.setAttribute("preserveAspectRatio", "none");
+alignSVGViewBox(svgEl) {
+    svgEl.setAttribute("preserveAspectRatio", "xMidYMid meet");
     svgEl.style.width = "100%";
     svgEl.style.height = "100%";
   }
