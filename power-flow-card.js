@@ -38,11 +38,11 @@ class PowerFlowCard extends LitElement {
     this.isInitialized = false;
 
     this.descriptorAnchors = {
-      solar: { lineX: 523, lineY1: -58, lineY2: 172, textX: 537 },
-      grid: { lineX: 171, lineY1: -58, lineY2: 535, textX: 185 },
-      battery: { lineX: 672, lineY1: -58, lineY2: 435, textX: 686 },
-      ev: { lineX: 365, lineY1: -58, lineY2: 350, textX: 379 },
-      home: { lineX: 888, lineY1: -58, lineY2: 290, textX: 902 },
+      solar: { lineX: 523, lineY1: -48, lineY2: 137, textX: 537 },
+      grid: { lineX: 171, lineY1: -48, lineY2: 500, textX: 185 },
+      battery: { lineX: 672, lineY1: -48, lineY2: 400, textX: 686 },
+      ev: { lineX: 365, lineY1: -48, lineY2: 315, textX: 379 },
+      home: { lineX: 888, lineY1: -48, lineY2: 255, textX: 902 },
     };
   }
 
@@ -83,9 +83,8 @@ class PowerFlowCard extends LitElement {
     }
   }
 
-  // Ensures all injected SVGs scale identically, eliminating 1px line drift
-alignSVGViewBox(svgEl) {
-    svgEl.setAttribute("preserveAspectRatio", "xMidYMax meet");
+  alignSVGViewBox(svgEl) {
+    svgEl.setAttribute("preserveAspectRatio", "xMidYMid meet");
     svgEl.style.width = "100%";
     svgEl.style.height = "100%";
   }
@@ -461,22 +460,21 @@ alignSVGViewBox(svgEl) {
       :host {
         display: block;
       }
-      #svg-overlay {
-        position: relative;
-        width: 100%;
-        height: 350px;
-        container-type: size;
-        pointer-events: none;
-        padding: 48px 16px 16px 16px; 
-        box-sizing: border-box;
+      :host {
+        display: block;
+      }
+      ha-card {
+        overflow: hidden !important; /* Critical: Clips the car at the bottom */
       }
       #svg-overlay {
         position: relative;
-        width: 100%;
-        height: 290px;
+        width: 110%; /* Zooms the entire graphic in by 10% */
+        left: -5%; /* Re-centers the zoomed graphic */
+        height: 310px; /* Gives the SVG room to render large */
         container-type: size;
         pointer-events: none;
-        padding: 64px 16px 0px 16px;
+        padding: 24px 16px 0px 16px; /* Pulls the text up snugly under the title */
+        margin-bottom: -45px; /* Pulls the bottom of the card UP, cleanly slicing off the car */
         box-sizing: border-box;
       }
       #svg-container-bg svg {
@@ -769,7 +767,7 @@ alignSVGViewBox(svgEl) {
     
     if (label) rows.push({ type: 'text', text: label, class: "descriptor-label", offset: 0, fontSize: secondaryFontSize });
 
-    let currentY = -25; 
+    let currentY = -15; 
     
     const textNodes = rows.map((row) => {
       let node;
