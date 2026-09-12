@@ -464,15 +464,14 @@ class PowerFlowCard extends LitElement {
       }
       #svg-overlay {
         position: relative;
-        width: 112%; /* Zooms the entire graphic in nicely */
-        left: -6%; /* Keeps the zoomed graphic perfectly centered */
-        aspect-ratio: 1.5; /* CRITICAL: Locks proportions so the house NEVER squashes */
+        width: 101%;
+        left: -3%;
+        aspect-ratio: 1.5; 
         height: auto;
-        margin-top: 32px; /* Pushes the graphic down, leaving a safe gap for text */
-        margin-bottom: -10%; /* Pulls the bottom of the card UP, cleanly slicing the car */
+        margin-top: 32px; 
+        margin-bottom: -7%; 
         container-type: size;
         pointer-events: none;
-        /* Note: No padding used here, as padding distorts SVG scaling */
       }
       #svg-overlay > div:not(.descriptor) {
         position: absolute;
